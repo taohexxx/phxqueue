@@ -24,14 +24,14 @@ namespace {
 inline int LogLevel2GoogleLogLevel(const phxqueue::comm::LogLevel log_level) {
     switch (log_level) {
         case phxqueue::comm::LogLevel::Error:
-            return google::ERROR;
         case phxqueue::comm::LogLevel::Warning:
-            return google::WARNING;
+            return google::ERROR;
         case phxqueue::comm::LogLevel::Info:
-            return google::INFO;
+            return google::WARNING;
         case phxqueue::comm::LogLevel::Verbose:
+            return google::INFO;
         default:
-            ;
+            break;
     }
 
     return -1;
@@ -50,11 +50,14 @@ using namespace std;
 
 
 int LoggerGoogle::GetLogger(const string &module_name, const string &log_path,
-                            const int google_log_level, comm::LogFunc &log_func) {
+                            const int log_level, comm::LogFunc &log_func) {
     static const string log_name = module_name;
     google::InitGoogleLogging(log_name.c_str());
     FLAGS_log_dir = log_path;
     FLAGS_stderrthreshold = google::FATAL;
+    int google_log_level{LogLevel2GoogleLogLevel(static_cast<comm::LogLevel>(log_level))};
+    if (google_log_level < 0) google_log_level = 0;
+
     FLAGS_minloglevel = google_log_level;
     log_func = LoggerGoogle::Log;
 
