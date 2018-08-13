@@ -182,6 +182,17 @@ int MqttMessage::SendRemaining(ostringstream &out_stream) const {
 
         return ret;
     }
+        // TODO: remove
+        //string remaining_buffer(out_stream.str());
+        //printf("remaining_buffer %zu\n", remaining_buffer.size());
+        //for (int i{0}; remaining_buffer.size() > i; ++i) {
+        //printf("%d\t", remaining_buffer.at(i));
+        //}
+        //printf("\n");
+        //for (int i{0}; remaining_buffer.size() > i; ++i) {
+        //printf("%c\t", remaining_buffer.at(i));
+        //}
+        //printf("\n");
 
     ret = SendPayload(out_stream);
     if (0 != ret) {
@@ -189,6 +200,17 @@ int MqttMessage::SendRemaining(ostringstream &out_stream) const {
 
         return ret;
     }
+        // TODO: remove
+        //remaining_buffer = out_stream.str();
+        //printf("remaining_buffer %zu\n", remaining_buffer.size());
+        //for (int i{0}; remaining_buffer.size() > i; ++i) {
+        //printf("%d\t", remaining_buffer.at(i));
+        //}
+        //printf("\n");
+        //for (int i{0}; remaining_buffer.size() > i; ++i) {
+        //printf("%c\t", remaining_buffer.at(i));
+        //}
+        //printf("\n");
 
     return ret;
 }

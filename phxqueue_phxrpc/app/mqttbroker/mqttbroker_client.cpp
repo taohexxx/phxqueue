@@ -641,6 +641,43 @@ int MqttBrokerClient::MqttDisconnect(const MqttDisconnectPb &req, google::protob
 
 // proto
 
+// TODO: use this
+//phxqueue::comm::RetCode
+//MqttBrokerClient::ProtoHttpPublish(const HttpPublishPb &req, HttpPubackPb *resp) {
+//    const char *ip{req.addr().ip().c_str()};
+//    const int port{req.addr().port()};
+//
+//    auto &&socket_pool(phxqueue::comm::ResourcePool<uint64_t, phxrpc::BlockTcpStream>::GetInstance());
+//    auto &&key(phxqueue::comm::utils::EncodeAddr(req.addr()));
+//    auto socket(move(socket_pool->Get(key)));
+//
+//    if (nullptr == socket.get()) {
+//        socket.reset(new phxrpc::BlockTcpStream());
+//
+//        bool open_ret{phxrpc::PhxrpcTcpUtils::Open(socket.get(), ip, port,
+//                                                   global_mqttbrokerclient_config_.GetConnectTimeoutMS(), nullptr, 0,
+//                                                   *(global_mqttbrokerclient_monitor_.get()))};
+//        if (!open_ret) {
+//            QLErr("phxrpc Open err. ip %s port %d", ip, port);
+//
+//            return phxqueue::comm::RetCode::RET_ERR_SYS;
+//        }
+//        socket->SetTimeout(global_mqttbrokerclient_config_.GetSocketTimeoutMS());
+//    }
+//
+//    phxrpc::HttpMessageHandlerFactory http_msg_factory;
+//    MqttBrokerStub stub(*(socket.get()), *(global_mqttbrokerclient_monitor_.get()), http_msg_factory);
+//    stub.set_keep_alive(true);
+//    int ret{stub.HttpPublish(req, resp)};
+//    if (0 > ret) {
+//        QLErr("HttpPublish err %d", ret);
+//    }
+//    if (-1 != ret && -202 != ret) {
+//        socket_pool->Put(key, socket);
+//    }
+//    return static_cast<phxqueue::comm::RetCode>(ret);
+//}
+
 phxqueue::comm::RetCode
 MqttBrokerClient::ProtoHttpPublish(const HttpPublishPb &req, HttpPubackPb *resp) {
     const char *ip{req.addr().ip().c_str()};

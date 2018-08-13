@@ -487,6 +487,8 @@ void EventLoopServer::RunForever() {
 int EventLoopServer::SendResponse(const uint64_t session_id, phxrpc::BaseResponse *resp) {
     // push to server unit outqueue
     int server_unit_idx{Session::GetServerUnitIdx(session_id)};
+    // TODO: remove
+    printf("session %" PRIx64 " idx %d\n", session_id, server_unit_idx);
     if (0 > server_unit_idx || server_unit_list_.size() <= server_unit_idx)
         return -1;
 

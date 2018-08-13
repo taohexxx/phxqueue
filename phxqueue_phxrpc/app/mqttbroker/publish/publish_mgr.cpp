@@ -46,6 +46,8 @@ int Publish(const HttpPublishPb &req, const DispatchCtx *const ctx) {
     const auto sub_mqtt_session(MqttSessionMgr::GetInstance()->
                                 GetByClientId(req.sub_client_id()));
     if (!sub_mqtt_session) {
+        // TODO: remove
+        printf("%s:%d GetByClientId err sub_client_id \"%s\"\n", __func__, __LINE__, req.sub_client_id().c_str());
         NLErr("GetByClientId err sub_client_id \"%s\"", req.sub_client_id().c_str());
 
         return -1;
@@ -89,6 +91,41 @@ int Publish(const HttpPublishPb &req, const DispatchCtx *const ctx) {
                 continue;
             }
 
+            //// ack_key = sub_client_id + sub_packet_id
+            //const string ack_key(req.sub_client_id() + ':' + to_string(sub_packet_id));
+            //void *data{nullptr};
+            //auto *mqtt_publish(new MqttPublish);
+            //mqtt_publish->FromPb(mqtt_publish_pb);
+            //int ret{server_mgr->SendAndWaitAck(ctx->session_id, mqtt_publish,
+            //                                   worker_uthread_scheduler_, ack_key, data)};
+            //// TODO: check ret
+
+            //MqttPuback *puback{(MqttPuback *)data};
+            //if (!puback) {
+            //    NLErr("sub_session_id %" PRIx64 " server_mgr.SendAndWaitAck nullptr "
+            //          "qos %u ack_key \"%s\"", ctx->session_id,
+            //          req.mqtt_publish().qos(), ack_key.c_str());
+
+            //    return -1;
+            //}
+
+            //NLInfo("sub_session_id %" PRIx64 " server_mgr.SendAndWaitAck ack_key \"%s\" qos %u",
+            //       ctx->session_id, ack_key.c_str(), req.mqtt_publish().qos());
+
+            //ret = puback->ToPb(resp->mutable_mqtt_puback());
+
+            //delete puback;
+            //puback = nullptr;
+
+            //MqttPacketIdMgr::GetInstance()->ReleasePacketId(req.pub_client_id(),
+            //        req.mqtt_publish().packet_identifier(), req.sub_client_id());
+
+            //if (0 != ret) {
+            //    NLErr("ToPb err %d", ret);
+
+            //    return -1;
+            //}
+
             break;  // finish send
         }
     } else {
@@ -113,6 +150,7 @@ int Publish(const HttpPublishPb &req, const DispatchCtx *const ctx) {
         }
 
         // set remote prev_cursor_id
+        // TODO:
         TableMgr table_mgr(1000);
         //TableMgr table_mgr(ctx->config->topic_id());
         uint64_t version{0uLL};
@@ -120,6 +158,7 @@ int Publish(const HttpPublishPb &req, const DispatchCtx *const ctx) {
         table_mgr.GetSessionByClientIdRemote(req.sub_client_id(), &version, &session_pb);
         session_pb.set_prev_cursor_id(req.cursor_id());
         table_mgr.SetSessionByClientIdRemote(req.sub_client_id(), version, session_pb);
+        // TODO: ignore ret?
 
         NLInfo("sub_session_id %" PRIx64 " server_mgr.Send sub_client_id \"%s\" qos %u",
                ctx->session_id, req.sub_client_id().c_str(),
@@ -171,11 +210,17 @@ void *PublishRoutineRun(void *arg) {
         auto &&kv(*it);
         // 2. if lost msg
         if (-1 != last_cursor_id && last_cursor_id + 1 < kv.first) {
+            // TODO: remove
+            printf("%s:%d check lost last_cursor_id %" PRIu64 " current_curosr_id %" PRIu64 "\n",
+                   __func__, __LINE__, last_cursor_id, kv.first);
             for (uint64_t cursor_id{last_cursor_id + 1}; kv.first > cursor_id; ++cursor_id) {
                 // 2.1. get from lru cache
                 HttpPublishPb http_publish_pb;
                 int ret{PublishLruCache::GetInstance()->Get(cursor_id, http_publish_pb)};
                 if (0 != ret) {
+                    // TODO: remove
+                    printf("%s:%d PublishLruCache.Get err %d cursor_id %" PRIu64 "\n",
+                           __func__, __LINE__, ret, cursor_id);
                     // 2.2. if no cache, rpc get from store
                     phxqueue::comm::proto::GetRequest req;
                     phxqueue::comm::proto::GetResponse resp;
@@ -184,17 +229,26 @@ void *PublishRoutineRun(void *arg) {
                     req.set_queue_id(kv.second.queue_id());
                     req.set_prev_cursor_id(-1);
                     req.set_next_cursor_id(kv.first);
+                    // TODO: calc limit
                     req.set_limit(10);
                     req.set_random(true);
                     phxqueue::store::StoreMasterClient<phxqueue::comm::proto::GetRequest,
                             phxqueue::comm::proto::GetResponse> store_master_client;
                     phxqueue::comm::RetCode ret2{store_master_client.ClientCall(
                             req, resp, bind(Get, placeholders::_1, placeholders::_2))};
+                    // TODO: remove
+                    printf("%s:%d store.Get err %d\n", __func__, __LINE__);
                     if (phxqueue::comm::RetCode::RET_OK != ret2) {
+                        // TODO: remove
+                        printf("%s:%d Get err %d\n", __func__, __LINE__, phxqueue::comm::as_integer(ret2));
                         NLErr("Get ret %d", phxqueue::comm::as_integer(ret2));
                     } else {
+                        // TODO: remove
+                        printf("%s:%d Get nr %zu\n", __func__, __LINE__, resp.items_size());
                         for (const auto &item : resp.items()) {
                             if (kv.first == item.cursor_id()) {
+                                // TODO: remove
+                                printf("%s:%d skip %" PRIu64 "\n", __func__, __LINE__, item.cursor_id());
                                 NLErr("skip %" PRIu64, item.cursor_id());
 
                                 continue;
@@ -203,14 +257,20 @@ void *PublishRoutineRun(void *arg) {
                             // 2.3. set to lru cache
                             phxqueue_phxrpc::logic::mqtt::HttpPublishPb message;
                             if (!message.ParseFromString(item.buffer())) {
+                                // TODO: remove
+                                printf("%s:%d ParseFromString err\n", __func__, __LINE__);
                                 NLErr("ParseFromString err");
 
                                 continue;
                             }
+                            // TODO: remove
+                            printf("%s:%d message: {\n%s}\n", __func__, __LINE__, resp.DebugString().c_str());
                             PublishLruCache::GetInstance()->Put(cursor_id, message);
                             // 2.4. add to eventloop server out queue
                             ret = Publish(message, ctx);
                             if (ret) {
+                                // TODO: remove
+                                printf("%s:%d Publish err %d\n", __func__, __LINE__, ret);
                                 NLErr("Publish err %d", ret);
 
                                 continue;
@@ -224,9 +284,13 @@ void *PublishRoutineRun(void *arg) {
         }
         last_cursor_id = kv.first;
 
+        // TODO: remove
+        printf("%s:%d get succ\n", __func__, __LINE__);
         // 3. add to el out queue
         int ret{Publish(kv.second, ctx)};
         if (ret) {
+            // TODO: remove
+            printf("%s:%d Publish err %d\n", __func__, __LINE__, ret);
             NLErr("Publish err %d", ret);
         }
         // 3.1. if session die
@@ -235,6 +299,8 @@ void *PublishRoutineRun(void *arg) {
 
         // 4. rpc set prev to lock
         if (0 == (nr_succ % 10)) {
+            // TODO: remove
+            printf("%s:%d yield\n", __func__, __LINE__);
             // yield other co
             poll(nullptr, 0, 0);
         }
@@ -252,6 +318,9 @@ int CoTickFunc(void *args) {
     SessionOpType op{SessionOpType::NOP};
     //printf("%s:%d config %p\n", __func__, __LINE__, publish_thread->config());
     while (0 == publish_thread->PopSessionOp(&session_id, &op)) {
+        // TODO: remove
+        printf("%s:%d pop session %" PRIu64 " op %d config %p sleep_time_ms %d\n", __func__, __LINE__,
+               session_id, static_cast<int>(op), publish_thread->config(), publish_thread->config()->publish_sleep_time_ms());
         if (SessionOpType::CREATE == op) {
             stCoRoutineAttr_t attr;
             attr.stack_size = 1024 * publish_thread->config()->share_stack_size_kb();
@@ -263,6 +332,7 @@ int CoTickFunc(void *args) {
             co_create(&(ctx->co), &attr, PublishRoutineRun, ctx);
             co_resume(ctx->co);
         } else if (SessionOpType::DESTROY == op) {
+            // TODO:
         }
     }
 
@@ -311,27 +381,39 @@ int SessionOpQueue::Pop(uint64_t *const session_id, SessionOpType *const op) {
 
 PublishThread::PublishThread(const MqttBrokerServerConfig *const config)
         : config_(config), thread_(&PublishThread::RunFunc, this) {
+    // TODO: remove
+    printf("%s:%d config %p sleep_time_ms %d\n", __func__, __LINE__, config_, config_->publish_sleep_time_ms());
 }
 
 PublishThread::PublishThread(PublishThread &&publish_thread) {
     config_ = publish_thread.config_;
     publish_thread.config_ = nullptr;
     thread_ = move(publish_thread.thread_);
+    // TODO: remove
+    printf("%s:%d config %p sleep_time_ms %d\n", __func__, __LINE__, config_, config_->publish_sleep_time_ms());
 }
 
 PublishThread::~PublishThread() {
+    // TODO: remove
+    printf("%s:%d dispose\n");
     thread_.join();
 }
 
 void PublishThread::RunFunc() {
+    // TODO: remove
+    printf("%s:%d config %p sleep_time_ms %d\n", __func__, __LINE__, config_, config_->publish_sleep_time_ms());
     co_eventloop(co_get_epoll_ct(), CoTickFunc, this);
 }
 
 int PublishThread::CreateSession(const uint64_t session_id) {
+    // TODO: remove
+    printf("%s:%d push\n", __func__, __LINE__);
     return session_op_queue_.Push(session_id, SessionOpType::CREATE);
 }
 
 int PublishThread::DestroySession(const uint64_t session_id) {
+    // TODO: remove
+    printf("%s:%d push\n", __func__, __LINE__);
     return session_op_queue_.Push(session_id, SessionOpType::DESTROY);
 }
 
@@ -354,7 +436,13 @@ void PublishMgr::SetInstance(PublishMgr *const instance) {
 PublishMgr::PublishMgr(const MqttBrokerServerConfig *const config)
         : config_(config), nr_publish_threads_(config->nr_publish_thread()) {
     for (int i{0}; nr_publish_threads_ > i; ++i) {
+        // TODO: remove
+        printf("%s:%d config %p sleep_time_ms %d\n", __func__, __LINE__,
+               config, config->publish_sleep_time_ms());
         publish_threads_.emplace_back(move(unique_ptr<PublishThread>(new PublishThread(config))));
+        // TODO: remove
+        printf("%s:%d config %p sleep_time_ms %d\n", __func__, __LINE__,
+               config, config->publish_sleep_time_ms());
     }
 }
 
@@ -362,11 +450,15 @@ PublishMgr::~PublishMgr() {
 }
 
 int PublishMgr::CreateSession(const uint64_t session_id) {
+    // TODO: remove
+    printf("%s:%d test\n", __func__, __LINE__);
     return publish_threads_[hash<uint64_t>{}(session_id) % nr_publish_threads_]->
             CreateSession(session_id);
 }
 
 int PublishMgr::DestroySession(const uint64_t session_id) {
+    // TODO: remove
+    printf("%s:%d test\n", __func__, __LINE__);
     return publish_threads_[hash<uint64_t>{}(session_id) % nr_publish_threads_]->
             DestroySession(session_id);
 }

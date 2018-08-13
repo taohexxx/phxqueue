@@ -108,7 +108,10 @@ int main(int argc,char **argv) {
 
     if (nullptr == config_file) ShowUsage(argv[0]);
 
+    // TODO: not use pointer
     MqttBrokerServerConfig config;
+    // TODO: remove
+    printf("%s:%d config %p\n", __func__, __LINE__, &config);
 
     if (!config.Read(config_file)) ShowUsage(argv[0]);
 

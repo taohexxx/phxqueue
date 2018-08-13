@@ -147,12 +147,18 @@ class CircularQueue {
     }
 
     int push_back(const Key &key, const Value &value) {
+        // TODO: remove
+        printf("%s:%d out_pos %zu in_pos %zu\n", __func__, __LINE__, data_.out_pos, data_.in_pos);
         std::lock_guard<std::mutex> guard(data_.mutex);
+        // TODO: remove
+        printf("%s:%d out_pos %zu in_pos %zu\n", __func__, __LINE__, data_.out_pos, data_.in_pos);
 
         data_.vec[data_.ModPos(data_.in_pos++)] = std::make_pair(key, value);
         if (data_.size() > data_.vec.size()) {
             ++data_.out_pos;
         }
+        // TODO: remove
+        printf("%s:%d out_pos %zu in_pos %zu\n", __func__, __LINE__, data_.out_pos, data_.in_pos);
 
         return 0;
     }
@@ -169,7 +175,11 @@ class CircularQueue {
     }
 
     int pop_front(Key &key, Value &value) {
+        // TODO: remove
+        printf("%s:%d out_pos %zu in_pos %zu\n", __func__, __LINE__, data_.out_pos, data_.in_pos);
         std::lock_guard<std::mutex> guard(data_.mutex);
+        // TODO: remove
+        printf("%s:%d out_pos %zu in_pos %zu\n", __func__, __LINE__, data_.out_pos, data_.in_pos);
 
         if (0 >= data_.size())
             return -1;
@@ -177,6 +187,8 @@ class CircularQueue {
         key = std::move(data_.vec[data_.ModPos(data_.out_pos)].first);
         value = std::move(data_.vec[data_.ModPos(data_.out_pos)].second);
         ++data_.out_pos;
+        // TODO: remove
+        printf("%s:%d out_pos %zu in_pos %zu\n", __func__, __LINE__, data_.out_pos, data_.in_pos);
 
         return 0;
     }

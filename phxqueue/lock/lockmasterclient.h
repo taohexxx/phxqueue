@@ -37,8 +37,8 @@ class LockMasterClient : public comm::MasterClient<Req, Resp> {
 
 template <typename Req, typename Resp>
 std::string LockMasterClient<Req, Resp>::GetRouteKeyByReq(const Req &req) {
-    // TODO:remove
-    printf("%s:%d key %s\n", __func__, __LINE__, comm::GetRouteKey(req.topic_id(), req.lock_id(), req.key()).c_str());
+    // TODO: remove
+    //printf("%s:%d key %s\n", __func__, __LINE__, comm::GetRouteKey(req.topic_id(), req.lock_id(), req.key()).c_str());
     return comm::GetRouteKey(req.topic_id(), req.lock_id(), req.key());
 }
 
@@ -48,7 +48,7 @@ template <>
 inline std::string LockMasterClient<comm::proto::SetStringRequest,
        comm::proto::SetStringResponse>::GetRouteKeyByReq(
        const comm::proto::SetStringRequest &req) {
-    // TODO:remove
+    // TODO: remove
     printf("%s:%d key %s\n", __func__, __LINE__, comm::GetRouteKey(req.topic_id(), req.lock_id(), req.string_info().key()).c_str());
     return comm::GetRouteKey(req.topic_id(), req.lock_id(), req.string_info().key());
 }

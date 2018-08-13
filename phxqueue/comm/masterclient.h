@@ -74,6 +74,9 @@ class MasterClient : public MasterClientBase {
             req.mutable_master_addr()->CopyFrom(master_addr);
             ret = rpc_func(req, resp);
 
+            // TODO: remove
+            //printf("%s:%d rpc_func ret %d addr(%s:%d) route_key(%s)\n", __func__, __LINE__,
+            //       as_integer(ret), master_addr.ip().c_str(), master_addr.port(), route_key.c_str());
             QLVerb("rpc_func ret %d addr(%s:%d) route_key(%s)", as_integer(ret), master_addr.ip().c_str(),
                     master_addr.port(), route_key.c_str());
 
@@ -134,6 +137,9 @@ class MasterClient : public MasterClientBase {
             ret = rpc_func(req, resp);
 
             QLVerb("rpc_func again ret %d addr(%s:%d) route_key(%s)", as_integer(ret), addr.ip().c_str(),
+                    addr.port(), route_key.c_str());
+    // TODO: remove
+    printf("%s:%d rpc_func again ret %d addr(%s:%d) route_key(%s)\n", __func__, __LINE__, as_integer(ret), addr.ip().c_str(),
                     addr.port(), route_key.c_str());
 
             if (RetCode::RET_OK == ret) {
